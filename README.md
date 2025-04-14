@@ -6,7 +6,7 @@ This repository provides files and/or templates to help you get started with the
 ```
 project-skeleton/
 │-- M1/              # Contains VGA controller
-│-- M2/              # To be updated
+│-- M2/              # Skeleton files for image convolution and SPI-Gyro communication
 │-- .gitignore       # Git ignore file to be used with your Quartus project
 │-- README.md        # Documentation and/or instructions
 
@@ -15,7 +15,7 @@ project-skeleton/
 ## Getting Started
 1. Clone the repository:
    ```sh
-   git clone https://github.com/ece3073-monash/project-skeleton.git
+   git clone https://github.com/ece3073-monash/project-templates.git
    ```
 2. Copy files .gitignore and template files in your project directory.
 
