@@ -3,27 +3,33 @@
 // VGA Controller Module
 // Made for students to use during the ECE3073 Project
 // 
-// Author(s): ECE3073 staff
-// Last Edited: 25/02/2024
+// Author: ECE3073 Teaching Team
+// Last Edited:05/02/2026
 //
-// Copyright © 2025 Copyright, Monash University
+// Copyright © 2026 Copyright, Monash University
 //
 // *********************************
 
 
 module vga_controller (
-	input [3:0] VGA_DATA,
+	// 25MHz clock derived from CLOCK_50
 	input VGA_CLK,
 	
+	// Controller interface with the pixel buffer
+	input [3:0] VGA_DATA,
 	output [18:0] VGA_ADDR, // This address may vary, having it longer that what you use wont be an issue
+	
+	// Pixel data output
 	output [3:0] VGA_R,
 	output [3:0] VGA_G,
 	output [3:0] VGA_B,
+	
+	
+	// VGA timing output
 	output VGA_HS,
 	output VGA_VS
+	
 );
-
-	// VGA Spec Parameters
 	parameter H_SYNC = 96;
 	parameter H_BACK = 48;
 	parameter H_FRONT = 16;
@@ -34,42 +40,45 @@ module vga_controller (
 	parameter V_FRONT = 10;
 	parameter V_CYCLE = 525;
 	
+	
 	reg [18:0] H_ADDR, V_ADDR;
 
-	always @(posedge VGA_CLK) // Horizontal Counter
+	always @(posedge VGA_CLK) // horizontal counter
 		begin
-			if (H_ADDR < H_CYCLE)
+			if (H_ADDR < H_CYCLE - 1)
 				H_ADDR <= H_ADDR + 1;
 			else
 				H_ADDR <= 0;
 		end
 		
-	always @(posedge VGA_CLK) // Vertical Counter
+	always @(posedge VGA_CLK) // vertical counter
 		begin
-			if (H_ADDR == H_CYCLE)
+			if (H_ADDR == H_CYCLE - 1)
 				begin
-					if (V_ADDR < V_CYCLE)
+					if (V_ADDR < V_CYCLE - 1)
 						V_ADDR <= V_ADDR + 1;
 					else
 						V_ADDR <= 0;
 				end
 		end
 		
-	assign VGA_HS = (H_ADDR < H_SYNC) ? 1 : 0; 
-	assign VGA_VS = (V_ADDR < V_SYNC) ? 1 : 0; 
+	assign VGA_HS = ~(H_ADDR < H_SYNC); // hsync high for 96 counts
+	assign VGA_VS = ~(V_ADDR < V_SYNC); // vsync high for 2 counts
 
-	assign pixelValid = (H_ADDR >= 144 && H_ADDR < 784) && (V_ADDR >= 35 && V_ADDR < 515);
-	assign VGA_R = pixelValid ? VGA_DATA : 4'd0;
-	assign VGA_G = pixelValid ? VGA_DATA : 4'd0;
-	assign VGA_B = pixelValid ? VGA_DATA : 4'd0;
+	assign pixelValid = (H_ADDR > (H_SYNC + H_BACK) && H_ADDR < (H_CYCLE - H_FRONT)) && (V_ADDR > (V_SYNC + V_BACK) && V_ADDR < (V_CYCLE - V_FRONT));
+	
+	assign VGA_R = pixelValid ? VGA_DATA[3:0] : 4'd0;
+	assign VGA_G = pixelValid ? VGA_DATA[3:0] : 4'd0;
+	assign VGA_B = pixelValid ? VGA_DATA[3:0] : 4'd0;
 	
 	wire [18:0] H_MEM_ADDR, V_MEM_ADDR;	
 	
-	assign H_MEM_ADDR = H_ADDR - 144;
-	assign V_MEM_ADDR = V_ADDR - 35;
+	assign H_MEM_ADDR = H_ADDR - (H_SYNC + H_BACK) + 1;
+	assign V_MEM_ADDR = V_ADDR - (V_SYNC + V_BACK);
 	
-	// Scale the addresses to 320X240 instead of 640x480. 
-	assign VGA_ADDR = ((H_MEM_ADDR>>1) + ((V_MEM_ADDR>>1) * 320));
+//	// Scale the addresses to 320X240 instead of 640x480. 
+	assign VGA_ADDR = ((H_MEM_ADDR >> 1) + ((V_MEM_ADDR >> 1) * 320));
 					
 	
 endmodule
+
